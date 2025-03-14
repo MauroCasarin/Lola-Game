@@ -3,10 +3,6 @@
 <head>
     <title>Lola Game</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-<link rel="manifest" href="/site.webmanifest">
     <style>
         body {
             display: flex;
@@ -20,7 +16,7 @@
 
         #game-container {
             position: relative;
-            width: 90vw; /* Usa ancho relativo para adaptarse a la pantalla */
+            width: 90vw;
             height: 200px;
             border-bottom: 2px solid #333;
             overflow: hidden;
@@ -29,7 +25,7 @@
         #dino {
             position: absolute;
             bottom: 0;
-            left: 5vw; /* Usa posición relativa */
+            left: 5vw;
             width: 50px;
             height: 50px;
             background-image: url('lola.gif');
@@ -48,20 +44,32 @@
             position: absolute;
             background-size: cover;
         }
+
+        #score {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 20px;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
     <div id="game-container">
         <div id="dino"></div>
+        <div id="score">Puntuación: 0</div>
     </div>
 
     <script>
         const dino = document.getElementById('dino');
         const gameContainer = document.getElementById('game-container');
+        const scoreDisplay = document.getElementById('score');
         let isJumping = false;
         let position = 0;
         let obstacleIntervalId;
         let cloudIntervalId;
+        let score = 0;
+        let gameStarted = false; // Variable para controlar si el juego ha comenzado
 
         function jump() {
             if (isJumping) return;
@@ -87,9 +95,10 @@
             const obstacle = document.createElement('div');
             obstacle.classList.add('obstacle');
             gameContainer.appendChild(obstacle);
-            let obstaclePosition = gameContainer.offsetWidth; // Usa el ancho del contenedor
+            let obstaclePosition = gameContainer.offsetWidth;
             obstacle.style.left = obstaclePosition + 'px';
             let obstacleType = Math.random();
+            let obstaclePassed = false;
 
             if (obstacleType < 0.33) {
                 obstacle.style.backgroundImage = "url('quilmes.png')";
@@ -112,10 +121,14 @@
                 if (obstaclePosition < -40) {
                     clearInterval(obstacleInterval);
                     gameContainer.removeChild(obstacle);
+                    if (!obstaclePassed) {
+                        score += 10;
+                        scoreDisplay.textContent = 'Puntuación: ' + score;
+                    }
                 }
-                obstaclePosition -= 5;
+                obstaclePosition -= 5; // Velocidad reducida
                 obstacle.style.left = obstaclePosition + 'px';
-                if (obstaclePosition > 0 && obstaclePosition < 60 && position < parseInt(obstacle.style.bottom) + parseInt(obstacle.style.height)) {
+                if (gameStarted && obstaclePosition > 0 && obstaclePosition < 60 && position < parseInt(obstacle.style.bottom) + parseInt(obstacle.style.height)) {
                     alert('¡Perdiste!');
                     clearInterval(obstacleInterval);
                     resetGame();
@@ -127,7 +140,7 @@
             const cloud = document.createElement('div');
             cloud.classList.add('cloud');
             gameContainer.appendChild(cloud);
-            let cloudPosition = gameContainer.offsetWidth; // Usa el ancho del contenedor
+            let cloudPosition = gameContainer.offsetWidth;
             cloud.style.left = cloudPosition + 'px';
             cloud.style.top = Math.random() * 150 + 'px';
             let cloudType = Math.random();
@@ -138,7 +151,7 @@
                 cloud.style.height = '80px';
             } else {
                 cloud.style.backgroundImage = "url('cloud2.png')";
-                cloud.style.width = '60px';
+                cloud.style.width = '100px';
                 cloud.style.height = '60px';
             }
 
@@ -153,6 +166,7 @@
         }
 
         function startGame() {
+            gameStarted = true; // El juego ha comenzado
             obstacleIntervalId = setInterval(createObstacle, 2000);
             cloudIntervalId = setInterval(createCloud, 3000);
         }
@@ -166,15 +180,17 @@
             position = 0;
             isJumping = false;
             dino.style.bottom = '0px';
+            score = 0;
+            scoreDisplay.textContent = 'Puntuación: 0';
+            gameStarted = false; // El juego se ha reiniciado
 
             clearInterval(obstacleIntervalId);
             clearInterval(cloudIntervalId);
-            startGame();
+            setTimeout(startGame, 1000); // Inicia el juego después de 1 segundo
         }
 
         startGame();
 
-        // Eventos táctiles y de teclado
         document.addEventListener('touchstart', (event) => {
             jump();
         });
