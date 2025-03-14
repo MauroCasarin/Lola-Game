@@ -109,7 +109,7 @@
                     clearInterval(obstacleInterval);
                     gameContainer.removeChild(obstacle);
                 }
-                obstaclePosition -= 10;
+                obstaclePosition -= 5;
                 obstacle.style.left = obstaclePosition + 'px';
                 if (obstaclePosition > 0 && obstaclePosition < 60 && position < parseInt(obstacle.style.bottom) + parseInt(obstacle.style.height)) {
                     alert('¡Perdiste!');
