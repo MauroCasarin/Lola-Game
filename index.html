@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Lola Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f7f7f7;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 90vw; /* Usa ancho relativo para adaptarse a la pantalla */
+            height: 200px;
+            border-bottom: 2px solid #333;
+            overflow: hidden;
+        }
+
+        #dino {
+            position: absolute;
+            bottom: 0;
+            left: 5vw; /* Usa posición relativa */
+            width: 50px;
+            height: 50px;
+            background-image: url('lola.gif');
+            background-size: cover;
+        }
+
+        .obstacle {
+            position: absolute;
+            bottom: 0;
+            width: 50px;
+            height: 50px;
+            background-size: cover;
+        }
+
+        .cloud {
+            position: absolute;
+            background-size: cover;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="dino"></div>
+    </div>
+
+    <script>
+        const dino = document.getElementById('dino');
+        const gameContainer = document.getElementById('game-container');
+        let isJumping = false;
+        let position = 0;
+        let obstacleIntervalId;
+        let cloudIntervalId;
+
+        function jump() {
+            if (isJumping) return;
+            isJumping = true;
+            let upInterval = setInterval(() => {
+                if (position >= 150) {
+                    clearInterval(upInterval);
+                    let downInterval = setInterval(() => {
+                        if (position <= 0) {
+                            clearInterval(downInterval);
+                            isJumping = false;
+                        }
+                        position -= 10;
+                        dino.style.bottom = position + 'px';
+                    }, 20);
+                }
+                position += 20;
+                dino.style.bottom = position + 'px';
+            }, 20);
+        }
+
+        function createObstacle() {
+            const obstacle = document.createElement('div');
+            obstacle.classList.add('obstacle');
+            gameContainer.appendChild(obstacle);
+            let obstaclePosition = gameContainer.offsetWidth; // Usa el ancho del contenedor
+            obstacle.style.left = obstaclePosition + 'px';
+            let obstacleType = Math.random();
+
+            if (obstacleType < 0.33) {
+                obstacle.style.backgroundImage = "url('quilmes.png')";
+                obstacle.style.width = '40px';
+                obstacle.style.height = '40px';
+                obstacle.style.bottom = '0px';
+            } else if (obstacleType < 0.66) {
+                obstacle.style.backgroundImage = "url('brahma.png')";
+                obstacle.style.width = '40px';
+                obstacle.style.height = '40px';
+                obstacle.style.bottom = '0px';
+            } else {
+                obstacle.style.backgroundImage = "url('stela.png')";
+                obstacle.style.width = '40px';
+                obstacle.style.height = '40px';
+                obstacle.style.bottom = '0px';
+            }
+
+            let obstacleInterval = setInterval(() => {
+                if (obstaclePosition < -40) {
+                    clearInterval(obstacleInterval);
+                    gameContainer.removeChild(obstacle);
+                }
+                obstaclePosition -= 10;
+                obstacle.style.left = obstaclePosition + 'px';
+                if (obstaclePosition > 0 && obstaclePosition < 60 && position < parseInt(obstacle.style.bottom) + parseInt(obstacle.style.height)) {
+                    alert('¡Perdiste!');
+                    clearInterval(obstacleInterval);
+                    resetGame();
+                }
+            }, 20);
+        }
+
+        function createCloud() {
+            const cloud = document.createElement('div');
+            cloud.classList.add('cloud');
+            gameContainer.appendChild(cloud);
+            let cloudPosition = gameContainer.offsetWidth; // Usa el ancho del contenedor
+            cloud.style.left = cloudPosition + 'px';
+            cloud.style.top = Math.random() * 150 + 'px';
+            let cloudType = Math.random();
+
+            if (cloudType < 0.5) {
+                cloud.style.backgroundImage = "url('cloud.png')";
+                cloud.style.width = '80px';
+                cloud.style.height = '80px';
+            } else {
+                cloud.style.backgroundImage = "url('cloud2.png')";
+                cloud.style.width = '100px';
+                cloud.style.height = '60px';
+            }
+
+            let cloudInterval = setInterval(() => {
+                if (cloudPosition < -100) {
+                    clearInterval(cloudInterval);
+                    gameContainer.removeChild(cloud);
+                }
+                cloudPosition -= 5;
+                cloud.style.left = cloudPosition + 'px';
+            }, 50);
+        }
+
+        function startGame() {
+            obstacleIntervalId = setInterval(createObstacle, 2000);
+            cloudIntervalId = setInterval(createCloud, 3000);
+        }
+
+        function resetGame() {
+            const obstacles = document.querySelectorAll('.obstacle');
+            obstacles.forEach(obstacle => gameContainer.removeChild(obstacle));
+            const clouds = document.querySelectorAll('.cloud');
+            clouds.forEach(cloud => gameContainer.removeChild(cloud));
+
+            position = 0;
+            isJumping = false;
+            dino.style.bottom = '0px';
+
+            clearInterval(obstacleIntervalId);
+            clearInterval(cloudIntervalId);
+            startGame();
+        }
+
+        startGame();
+
+        // Eventos táctiles y de teclado
+        document.addEventListener('touchstart', (event) => {
+            jump();
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.code === 'Space') {
+                jump();
+            }
+        });
+    </script>
+</body>
+</html>
