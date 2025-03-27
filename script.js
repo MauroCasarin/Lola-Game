@@ -238,22 +238,21 @@ reiniciarBtn.addEventListener('click', () => {
     setInterval(crearNube, 3000);
 });
 
-arribaBtn.addEventListener('touchstart', (event) => {
-    event.preventDefault(); // Evita el comportamiento predeterminado del toque
+function moverHelicopteroArriba() {
     if (!juegoActivo) return;
     helicopteroY -= 20;
     if (helicopteroY < 0) helicopteroY = 0;
     helicoptero.style.top = helicopteroY + 'px';
-});
+}
 
-abajoBtn.addEventListener('click', () => {
+function moverHelicopteroAbajo() {
     if (!juegoActivo) return;
     helicopteroY += 20;
     if (helicopteroY > window.innerHeight - 50) helicopteroY = window.innerHeight - 50;
     helicoptero.style.top = helicopteroY + 'px';
-});
+}
 
-dispararBtn.addEventListener('click', () => {
+function dispararHelicoptero() {
     if (!juegoActivo) return;
     sonidos.disparo.play();
     helicoptero.style.transform = 'translateY(-50%) rotate(-15deg)';
@@ -261,7 +260,28 @@ dispararBtn.addEventListener('click', () => {
         helicoptero.style.transform = 'translateY(-50%) rotate(0deg)';
     }, 200);
     crearLaser();
+}
+
+arribaBtn.addEventListener('touchstart', (event) => {
+    event.preventDefault();
+    moverHelicopteroArriba();
 });
+
+arribaBtn.addEventListener('click', moverHelicopteroArriba);
+
+abajoBtn.addEventListener('touchstart', (event) => {
+    event.preventDefault();
+    moverHelicopteroAbajo();
+});
+
+abajoBtn.addEventListener('click', moverHelicopteroAbajo);
+
+dispararBtn.addEventListener('touchstart', (event) => {
+    event.preventDefault();
+    dispararHelicoptero();
+});
+
+dispararBtn.addEventListener('click', dispararHelicoptero);
 
 document.addEventListener('keydown', (event) => {
     if (!juegoActivo) return;
