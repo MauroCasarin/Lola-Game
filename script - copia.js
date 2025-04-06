@@ -12,10 +12,10 @@ const trex = {
   velocityY: 0,
   gravity: 1.5,
   isJumping: false,
+  image: new Image(),
 };
 
-const trexImg = document.createElement('img');
-trexImg.src = 'lola.gif';
+trex.image.src = 'lola.gif';
 
 const cactusImages = [new Image(), new Image(), new Image()];
 cactusImages[0].src = 'brahma.png';
@@ -34,46 +34,18 @@ const cactus = {
 let score = 0;
 let gameOver = false;
 
-let horizonHeight;
+// Horizonte
+let horizonHeight; // Altura del horizonte se calculará dinámicamente
 const horizonColor = 'lightgray';
 
-// 🌥️ Nubes de fondo
+// Nubes
 const cloudImages = [new Image(), new Image()];
 cloudImages[0].src = 'cloud.png';
 cloudImages[1].src = 'cloud2.png';
 const clouds = [];
 
-function createCloud() {
-  clouds.push({
-    x: canvas.width + Math.random() * 200, // Posición inicial fuera del canvas
-    y: Math.random() * canvas.height / 2, // Altura variable
-    image: cloudImages[Math.floor(Math.random() * cloudImages.length)],
-    speed: Math.random() * 0.5 + 0.2, // Velocidad lenta para dar efecto de fondo
-    width: 50 + Math.random() * 20, // Tamaño variable
-    height: 50 + Math.random() * 20
-  });
-}
-
-function drawClouds() {
-  clouds.forEach(cloud => {
-    ctx.drawImage(cloud.image, cloud.x, cloud.y, cloud.width, cloud.height);
-  });
-}
-
-function updateClouds() {
-  if (clouds.length < 7 && Math.random() < 0.01) {
-    createCloud();
-  }
-  clouds.forEach((cloud, index) => {
-    cloud.x -= cloud.speed;
-    if (cloud.x < -cloud.width) {
-      clouds.splice(index, 1);
-    }
-  });
-}
-
 function drawTrex() {
-  ctx.drawImage(trexImg, trex.x, trex.y, trex.width, trex.height);
+  ctx.drawImage(trex.image, trex.x, trex.y, trex.width, trex.height);
 }
 
 function drawCactus() {
@@ -92,6 +64,7 @@ function drawGameOver() {
   ctx.fillText('Game Over!', canvas.width / 2 - 100, canvas.height / 2);
 }
 
+// Función para dibujar el horizonte
 function drawHorizon() {
   ctx.beginPath();
   ctx.moveTo(0, horizonHeight);
@@ -99,6 +72,38 @@ function drawHorizon() {
   ctx.strokeStyle = horizonColor;
   ctx.lineWidth = 2;
   ctx.stroke();
+}
+
+// Función para crear nubes
+function createCloud() {
+  clouds.push({
+    x: canvas.width + 200,
+    y: Math.random() * canvas.height / 3,
+    image: cloudImages[Math.floor(Math.random() * cloudImages.length)],
+    speed: Math.random() * 0.2 + 0.1,
+    width: 100,
+    height: 60,
+  });
+}
+
+// Función para dibujar las nubes
+function drawClouds() {
+  clouds.forEach(cloud => {
+    ctx.drawImage(cloud.image, cloud.x, cloud.y, cloud.width, cloud.height);
+  });
+}
+
+// Función para actualizar las nubes
+function updateClouds() {
+  if (clouds.length < 5 && Math.random() < 0.01) {
+    createCloud();
+  }
+  clouds.forEach((cloud, index) => {
+    cloud.x -= cloud.speed;
+    if (cloud.x < -200) {
+      clouds.splice(index, 1);
+    }
+  });
 }
 
 function update() {
@@ -132,17 +137,19 @@ function update() {
     gameOver = true;
   }
 
-  updateClouds(); // ✅ Actualiza las nubes
+  updateClouds();
 }
 
 function render() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawClouds(); // ✅ Dibuja las nubes de fondo
   drawHorizon();
+  drawClouds();
   drawTrex();
   drawCactus();
   drawScore();
-  if (gameOver) drawGameOver();
+  if (gameOver) {
+    drawGameOver();
+  }
 }
 
 function gameLoop() {
@@ -151,7 +158,7 @@ function gameLoop() {
   requestAnimationFrame(gameLoop);
 }
 
-// 🏃‍♂️ Evento de salto (teclado)
+// Evento de salto
 document.addEventListener('keydown', (event) => {
   if (event.code === 'Space' && !trex.isJumping && !gameOver) {
     trex.isJumping = true;
@@ -159,22 +166,13 @@ document.addEventListener('keydown', (event) => {
   }
 });
 
-// 📱 Evento de salto (pantalla táctil)
-canvas.addEventListener('touchstart', () => {
-  if (!trex.isJumping && !gameOver) {
-    trex.isJumping = true;
-    trex.velocityY = -25;
-  }
-});
-
-// 🚀 Cargar imágenes y comenzar el juego
-Promise.all(
-  [...cactusImages, ...cloudImages].map(
-    (img) => new Promise((resolve) => (img.onload = resolve))
-  )
-).then(() => {
+// Cargar imágenes y comenzar el juego
+Promise.all([...cactusImages, ...cloudImages, trex.image].map(img => {
+  return new Promise(resolve => {
+    img.onload = () => resolve();
+  });
+})).then(() => {
+  // Calcula la altura del horizonte después de que la imagen del T-Rex se haya cargado
   horizonHeight = trex.y + trex.height;
-  // Generar nubes iniciales
-  for (let i = 0; i < 5; i++) createCloud();
   gameLoop();
 });

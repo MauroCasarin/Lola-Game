@@ -1,29 +1,365 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-    <title>LOLA shot</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LOLA-GAME</title>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            font-family: 'Press Start 2P', cursive;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            background-color: #e0e0e0;
+            border-bottom: 2px solid lightgray;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #horizon {
+            position: absolute;
+            bottom: 0px;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background-color: #000;
+            z-index: 1;
+        }
+
+        #trex {
+            position: absolute;
+            left: 50px;
+            bottom: 0;
+            width: 50px;
+            height: 50px;
+            background-image: url('https://raw.githubusercontent.com/MauroCasarin/Lola-Game/refs/heads/main/lola.gif');
+            background-size: cover;
+            transition: transform 0.2s ease; /* Transición para la rotación */
+        }
+
+        .cactus {
+            position: absolute;
+            bottom: 0;
+            width: 50px;
+            height: 50px;
+            background-size: cover;
+        }
+
+        .cloud {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background-size: cover;
+        }
+
+        #scoreDisplay {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 20px;
+            color: black;
+            z-index: 1;
+        }
+
+        .game-over-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 24px;
+            z-index: 10;
+            display: none;
+        }
+
+        .game-over-content {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            background-color: rgba(0, 0, 0, 0.9);
+        }
+
+        #restartButton {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        #restartButton:hover {
+            background-color: #45a049;
+        }
+
+        @media (max-width: 600px) {
+            #gameContainer {
+                height: 300px;
+            }
+            .game-over-content {
+                font-size: 18px;
+            }
+            #restartButton {
+                font-size: 14px;
+                padding: 8px 16px;
+            }
+            #scoreDisplay{
+                font-size: 16px;
+            }
+        }
+    </style>
 </head>
 <body>
-    <div id="inicio">
-        <h1>LOLA shot</h1>
-        <button id="jugar">Jugar</button>
-    </div>
-    <div id="juego" style="display: none;">
-        <div id="puntuacion">Puntuación: 0</div>
-        <img id="helicoptero" src="https://raw.githubusercontent.com/MauroCasarin/Lola-Game/refs/heads/main/lola.gif" alt="Helicóptero">
-        <div id="botones">
-            <button id="arriba">Arriba</button>
-            <button id="abajo">Abajo</button>
-            <button id="disparar">Disparar</button>
+    <div id="gameContainer">
+        <div id="horizon"></div>
+        <div id="trex"></div>
+        <div id="scoreDisplay">Score: 0</div>
+        <div class="game-over-overlay" id="gameOverOverlay">
+            <div class="game-over-content">
+                <h2 id="gameOverText">Game Over!</h2>
+                <p>Puntuación: <span id="finalScore">0</span></p>
+                <button id="restartButton">Reiniciar</button>
+            </div>
         </div>
     </div>
-    <div id="fin-juego" style="display: none;">
-        <h1>¡Fin del juego!</h1>
-        <p id="puntuacion-final"></p>
-        <button id="reiniciar">Reiniciar</button>
-    </div>
-    <script src="script.js"></script>
+    <script>
+        const gameContainer = document.getElementById('gameContainer');
+        const horizonElement = document.getElementById('horizon');
+        const trexElement = document.getElementById('trex');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const gameOverOverlay = document.getElementById('gameOverOverlay');
+        const restartButton = document.getElementById('restartButton');
+        const finalScoreDisplay = document.getElementById('finalScore');
+        const gameOverText = document.getElementById('gameOverText');
+
+        let gameSpeed = 5;
+        let gameRunning = false;
+        let score = 0;
+        let gameOver = false;
+        let animationFrameId;
+        let horizonHeight = 100;
+        let trex = {
+            x: 50,
+            y: horizonHeight - 50,
+            width: 50,
+            height: 50,
+            velocityY: 0,
+            gravity: 1,
+            isJumping: false,
+            rotation: 0, // Agregamos la propiedad de rotación
+        };
+
+        let cactus = {
+            x: gameContainer.offsetWidth,
+            y: horizonHeight - 50,
+            width: 50,
+            height: 50,
+            element: null,
+            image: 'brahma.png'
+        };
+
+        let clouds = [];
+        const cactusImages = [
+            'https://raw.githubusercontent.com/MauroCasarin/Lola-Game/e17ef4a544f71b08c4cf0418af133e7834ac7157/brahma.png',
+            'https://raw.githubusercontent.com/MauroCasarin/Lola-Game/refs/heads/main/quilmes.png',
+            'https://raw.githubusercontent.com/MauroCasarin/Lola-Game/refs/heads/main/stela.png'
+        ];
+
+        const cloudImages = [
+            'https://raw.githubusercontent.com/MauroCasarin/Lola-Game/refs/heads/main/cloud.png',
+            'https://raw.githubusercontent.com/MauroCasarin/Lola-Game/refs/heads/main/cloud2.png'
+        ];
+
+        function resizeGameContainer() {
+            const width = Math.min(window.innerWidth, 800);
+            const height = Math.min(window.innerHeight, 400);
+            gameContainer.style.width = `${width}px`;
+            gameContainer.style.height = `${height}px`;
+            horizonHeight = height - 50;
+
+            if (!gameRunning) {
+                trex.y = horizonHeight - trex.height;
+            }
+        }
+
+        window.addEventListener('resize', resizeGameContainer);
+        resizeGameContainer();
+
+        function createCactusElement() {
+            if (!cactus.element) {
+                cactus.element = document.createElement('div');
+                cactus.element.className = 'cactus';
+                gameContainer.appendChild(cactus.element);
+            }
+            cactus.element.style.backgroundImage = `url(${cactus.image})`;
+            cactus.element.style.left = `${cactus.x}px`;
+            cactus.element.style.bottom = '0px';
+            cactus.element.style.width = `${cactus.width}px`;
+            cactus.element.style.height = `${cactus.height}px`;
+        }
+
+        function createCloudElement(cloud) {
+            const cloudElement = document.createElement('div');
+            cloudElement.className = 'cloud';
+            cloudElement.style.backgroundImage = `url(${cloud.image})`;
+            cloudElement.style.left = `${cloud.x}px`;
+            cloudElement.style.top = `${cloud.y}px`;
+            cloudElement.style.width = `${cloud.width}px`;
+            cloudElement.style.height = `${cloud.height}px`;
+            gameContainer.appendChild(cloudElement);
+            cloud.element = cloudElement;
+            return cloudElement;
+        }
+
+        function updateTrex() {
+            if (trex.isJumping) {
+                trex.y += trex.velocityY;
+                trex.velocityY += trex.gravity;
+                trex.rotation = Math.max(trex.rotation - 20, -45);  // Incrementa la rotación hasta -45 grados (antihorario)
+                trexElement.style.transform = `rotate(${trex.rotation}deg)`; // Aplica la rotación
+
+                if (trex.y >= horizonHeight - trex.height) {
+                    trex.y = horizonHeight - trex.height;
+                    trex.isJumping = false;
+                    trex.rotation = 0; // Resetea la rotación al aterrizar
+                    trexElement.style.transform = `rotate(${trex.rotation}deg)`; // Aplica la rotación
+                }
+            }
+            trexElement.style.bottom = `${horizonHeight - trex.y - trex.height}px`;
+        }
+
+        function updateCactus() {
+            cactus.x -= gameSpeed;
+            if (cactus.x < -cactus.width) {
+                cactus.x = gameContainer.offsetWidth;
+                cactus.image = cactusImages[Math.floor(Math.random() * cactusImages.length)];
+                score += 5;
+                scoreDisplay.textContent = `Score: ${Math.floor(score)}`;
+            }
+            if (cactus.element) {
+                cactus.element.style.left = `${cactus.x}px`;
+            }
+        }
+
+        function updateClouds() {
+            clouds.forEach((cloud, index) => {
+                cloud.x -= cloud.speed;
+                cloud.element.style.left = `${cloud.x}px`;
+                if (cloud.x < -cloud.width) {
+                    cloud.element.remove();
+                    clouds.splice(index, 1);
+                }
+            });
+
+            if (clouds.length < 3 && Math.random() < 0.01) {
+                const newCloud = {
+                    x: gameContainer.offsetWidth,
+                    y: Math.random() * (gameContainer.offsetHeight / 2),
+                    width: 50 + Math.random() * 50,
+                    height: 50 + Math.random() * 50,
+                    speed: Math.random() * 1 + 0.2,
+                    image: cloudImages[Math.floor(Math.random() * cloudImages.length)]
+                };
+                const cloudElement = createCloudElement(newCloud);
+                newCloud.element = cloudElement;
+                clouds.push(newCloud);
+            }
+        }
+
+        function checkCollision() {
+            if (
+                trex.x < cactus.x + cactus.width &&
+                trex.x + trex.width > cactus.x &&
+                trex.y < cactus.y + cactus.height &&
+                trex.y + trex.height > cactus.y
+            ) {
+                return true;
+            }
+            return false;
+        }
+
+        function update() {
+            updateTrex();
+            updateCactus();
+            updateClouds();
+
+            if (checkCollision()) {
+                gameOver = true;
+                showGameOverScreen();
+            }
+        }
+
+        function gameLoop() {
+            if (!gameOver) {
+                update();
+                animationFrameId = requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function startGame() {
+            if (cactus.element) {
+                cactus.element.remove();
+                cactus.element = null;
+            }
+            clouds.forEach(cloud => cloud.element.remove());
+            clouds = [];
+            trex.y = horizonHeight - trex.height;
+            cactus.x = gameContainer.offsetWidth;
+            cactus.y = horizonHeight - cactus.height;
+            score = 0;
+            scoreDisplay.textContent = `Score: ${Math.floor(score)}`;
+            gameOver = false;
+            gameOverOverlay.style.display = 'none';
+            createCactusElement();
+            gameRunning = true;
+            gameLoop();
+        }
+
+        function showGameOverScreen() {
+            cancelAnimationFrame(animationFrameId);
+            finalScoreDisplay.textContent = Math.floor(score);
+            gameOverOverlay.style.display = 'flex';
+            gameRunning = false;
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' && !trex.isJumping && gameRunning) {
+                trex.isJumping = true;
+                trex.velocityY = -20;
+            }
+        });
+
+        gameContainer.addEventListener('click', () => {
+            if (!trex.isJumping && gameRunning) {
+                trex.isJumping = true;
+                trex.velocityY = -20;
+            }
+        });
+
+        restartButton.addEventListener('click', startGame);
+
+        startGame();
+    </script>
 </body>
 </html>
