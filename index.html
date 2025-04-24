@@ -69,7 +69,7 @@
 
         #jumpButton {
             display: none; /* Oculto por defecto, se mostrará en pantallas más pequeñas */
-            margin-top: 20px; /* Espacio entre el canvas y el botón */
+            margin-top: 80px; /* Espacio entre el canvas y el botón */
             padding: 15px 30px;
             font-size: 24px;
             cursor: pointer;
@@ -94,7 +94,8 @@
     <div id="score">Puntuación: 0</div>
     <div id="gameOver">Fin del Juego</div>
     <button id="restartButton">Reiniciar</button>
-    <button id="jumpButton">Saltar</button> <script>
+<button id="jumpButton">Saltar<br>
+    </button> <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreDisplay = document.getElementById('score');
@@ -105,7 +106,7 @@
         // --- Dimensiones Originales del Juego (para referencia de escalado) ---
         // Aumentar la altura original para hacer el canvas más alto
         const originalCanvasWidth = 600;
-        const originalCanvasHeight = 500; // Canvas hecho más alto
+        const originalCanvasHeight = 600; // Canvas hecho más alto
         const aspectRatio = originalCanvasWidth / originalCanvasHeight;
 
         // --- Variables del Juego (serán escaladas) ---
