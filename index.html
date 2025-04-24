@@ -24,11 +24,12 @@
 
         canvas {
             border: 2px solid #333;
-            background: linear-gradient(to top, LightGray, LightSkyBlue); /* Gradiente de fondo del canvas */
+            /* background: linear-gradient(to top, LightGray, LightSkyBlue); Eliminado para usar imagen de fondo */
+            background-color: #fff; /* Color de respaldo si la imagen no carga */
             display: block;
-            margin: 10px auto; /* Centrar el canvas y añadir margen (ajustado de -0px) */
-            max-width: 90%; /* Limitar el ancho máximo relativo al viewport (ajustado a 90%) */
-            max-height: 85vh; /* Aumentar la altura máxima relativa a la altura del viewport (ajustado a 85vh) */
+            margin: 10px auto; /* Centrar el canvas y añadir margen */
+            max-width: 90%; /* Limitar el ancho máximo relativo al viewport */
+            max-height: 85vh; /* Aumentar la altura máxima relativa a la altura del viewport */
             width: auto; /* Permitir que el ancho se ajuste */
             height: auto; /* Permitir que la altura se ajuste */
         }
@@ -69,15 +70,15 @@
 
         #jumpButton {
             display: none; /* Oculto por defecto, se mostrará en pantallas más pequeñas */
-            margin-top: 110px; /* Espacio entre el canvas y el botón (ajustado a 110px) */
+            margin-top: 110px; /* Espacio entre el canvas y el botón */
             padding: 15px 30px;
             font-size: 24px;
             cursor: pointer;
             border: none;
-            border-radius: 15px; /* Ajustado a 15px */
-            background-color: #18943b; /* Ajustado al color verde */
+            border-radius: 15px;
+            background-color: #18943b;
             color: white;
-            box-shadow: 0px 10px 5px rgba(0, 0, 0, 0.3); /* Ajustado el box-shadow */
+            box-shadow: 0px 10px 5px rgba(0, 0, 0, 0.3);
         }
 
         /* Media query para mostrar el botón de salto en pantallas más pequeñas */
@@ -94,7 +95,9 @@
     <div id="score">Puntuación: 0</div>
     <div id="gameOver">Fin del Juego</div>
     <button id="restartButton">Reiniciar</button>
-    <button id="jumpButton">Saltar</button> <audio id="jumpSound" src="http://www.marcelomagni.com.ar/sound/salto.mp3"></audio>
+    <button id="jumpButton">Saltar</button>
+
+    <audio id="jumpSound" src="http://www.marcelomagni.com.ar/sound/salto.mp3"></audio>
     <audio id="backgroundMusic" src="http://www.marcelomagni.com.ar/sound/LolaGameMusic.mp3" loop></audio>
     <audio id="gameOverSound" src="http://www.marcelomagni.com.ar/sound/game-over.mp3"></audio>
 
@@ -112,17 +115,16 @@
         const gameOverSound = document.getElementById('gameOverSound');
 
         // --- Dimensiones Originales del Juego (para referencia de escalado) ---
-        // Aumentar la altura original para hacer el canvas más alto
         const originalCanvasWidth = 600;
-        const originalCanvasHeight = 300; // Canvas hecho más alto (ajustado a 300)
+        const originalCanvasHeight = 350; // Canvas hecho más alto
         const aspectRatio = originalCanvasWidth / originalCanvasHeight;
 
         // --- Variables del Juego (serán escaladas) ---
         let tRex = {
             x: 0, // Se establecerá al redimensionar
             y: 0, // Se establecerá al redimensionar
-            originalWidth: 70, // Ancho base para escalado (ajustado a 70)
-            originalHeight: 70, // Altura base para escalado (ajustado a 70)
+            originalWidth: 70, // Ancho base para escalado
+            originalHeight: 70, // Altura base para escalado
             width: 0, // Se establecerá al redimensionar
             height: 0, // Se establecerá al redimensionar
             dy: 0,
@@ -136,7 +138,7 @@
         let obstacles = [];
         let clouds = []; // Array para almacenar objetos de nubes
         let gameSpeed = 0; // Se establecerá al redimensionar
-        const initialGameSpeed = 5; // Velocidad inicial (ajustado a 5)
+        const initialGameSpeed = 5; // Velocidad inicial
         const speedIncreasePerScore = 0.5; // Cuánto aumenta la velocidad cada 10 puntos
         let score = 0;
         let gameRunning = true;
@@ -154,6 +156,16 @@
             'https://raw.githubusercontent.com/MauroCasarin/Lola-Game/9af808195ce2abfb240dc4f890d329acf0f09e55/cloud.svg',
             'https://raw.githubusercontent.com/MauroCasarin/Lola-Game/9af808195ce2abfb240dc4f890d329acf0f09e55/cloud2.svg'
         ];
+
+        // ** AQUÍ PUEDES CAMBIAR LA IMAGEN DE FONDO **
+        const backgroundImageUrl = 'https://raw.githubusercontent.com/MauroCasarin/Lola-Game/refs/heads/main/imagenfondo.jpg'; // URL de tu imagen de fondo
+        const backgroundImage = new Image();
+        backgroundImage.src = backgroundImageUrl;
+
+        // Variables para el fondo móvil
+        let backgroundX = 0; // Posición X del fondo
+        let backgroundSpeed = 1; // Velocidad de desplazamiento del fondo (ajusta según prefieras)
+
 
         // Objetos de imagen
         const tRexImage = new Image();
@@ -174,8 +186,8 @@
 
         // --- Función de Escalado ---
         function scaleGame() {
-            let newWidth = window.innerWidth * 0.90; // Usar hasta el 90% del ancho de la ventana (ajustado a 90%)
-            let newHeight = window.innerHeight * 0.85; // Usar hasta el 85% de la altura de la ventana (ajustado a 85%)
+            let newWidth = window.innerWidth * 0.90; // Usar hasta el 90% del ancho de la ventana
+            let newHeight = window.innerHeight * 0.85; // Usar hasta el 85% de la altura de la ventana
 
             // Mantener la relación de aspecto
             if (newWidth / newHeight > aspectRatio) {
@@ -205,8 +217,8 @@
             tRex.y = canvas.height - tRex.height; // Mantener en el suelo
 
             // Gravedad y poder de salto ajustados y escalados
-            tRex.gravity = 0.9 * scaleFactor; // Ajustado a 0.9 (escalado)
-            tRex.jumpPower = -20 * scaleFactor; // Ajustado a -20 (escalado)
+            tRex.gravity = 0.9 * scaleFactor;
+            tRex.jumpPower = -20 * scaleFactor;
 
             // gameSpeed se actualiza basado en la puntuación, así que no escalar la base aquí
 
@@ -246,6 +258,16 @@
 
 
         // --- Funciones del Juego ---
+
+        // Función para dibujar el fondo móvil
+        function drawBackground() {
+             // Dibujar la imagen de fondo dos veces para crear un efecto de bucle
+             // Dibuja la primera imagen
+            ctx.drawImage(backgroundImage, backgroundX, 0, canvas.width, canvas.height);
+            // Dibuja la segunda imagen inmediatamente después
+            ctx.drawImage(backgroundImage, backgroundX + canvas.width, 0, canvas.width, canvas.height);
+        }
+
 
         function drawTRex() {
             ctx.save(); // Guardar el estado actual del canvas
@@ -326,8 +348,8 @@
 
             // Generar nuevos obstáculos
             // Mayor aleatoriedad en la distancia
-            const minObstacleDistance = 300 * (canvas.width / originalCanvasWidth); // Ajustado a 300 (escalado)
-            const randomObstacleDistance = Math.random() * 400 * (canvas.width / originalCanvasWidth); // Ajustado a 400 (escalado)
+            const minObstacleDistance = 250 * (canvas.width / originalCanvasWidth); // Ajustado a 250 (escalado)
+            const randomObstacleDistance = Math.random() * 700 * (canvas.width / originalCanvasWidth); // Ajustado a 700 (escalado)
 
             if (obstacles.length === 0 || obstacles[obstacles.length - 1].x < canvas.width - randomObstacleDistance - minObstacleDistance) {
                  // Elegir una imagen de obstáculo aleatoriamente
@@ -361,7 +383,6 @@
             clouds.forEach(cloud => {
                 cloud.x -= cloud.speed * (canvas.width / originalCanvasWidth); // Escalar velocidad de la nube
             });
-
 
             // Eliminar nubes fuera de pantalla
             clouds = clouds.filter(cloud => cloud.x + cloud.width > 0);
@@ -400,6 +421,16 @@
                     image: randomCloudImage, // Almacenar el objeto de imagen
                     speed: Math.random() * 0.8 + 0.3 // Velocidad aleatoria de la nube (más lenta)
                 });
+            }
+        }
+
+        // Función para actualizar la posición del fondo
+        function updateBackground() {
+            backgroundX -= backgroundSpeed * (canvas.width / originalCanvasWidth); // Mover el fondo, escalado por la velocidad del juego
+
+            // Si la primera imagen de fondo sale de la pantalla, reiniciar su posición para crear un bucle
+            if (backgroundX < -canvas.width) {
+                backgroundX = 0;
             }
         }
 
@@ -442,6 +473,9 @@
             gameOverDisplay.style.display = 'none';
             restartButton.style.display = 'none';
 
+            // Reiniciar posición del fondo
+            backgroundX = 0;
+
             // Detener sonido de fin de juego y reiniciar música de fondo
             gameOverSound.pause();
             gameOverSound.currentTime = 0; // Reiniciar tiempo del sonido de fin de juego
@@ -465,10 +499,12 @@
             updateTRex();
             updateObstacles();
             updateClouds(); // Actualizar nubes
+            updateBackground(); // Actualizar posición del fondo
             checkCollision();
 
             // Dibujar elementos del juego
-            drawClouds(); // Dibujar nubes primero para que estén detrás
+            drawBackground(); // Dibujar fondo primero
+            drawClouds(); // Dibujar nubes después del fondo
             drawObstacles();
             drawTRex();
 
