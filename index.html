@@ -6,13 +6,13 @@
     <title>Juego T Lola</title>
     <style>
         body {
-            background: linear-gradient(to top, LightGray, SteelBlue);
-			display: flex;
+            background: linear-gradient(to top, LightGray, SteelBlue); /* Gradiente de fondo del cuerpo */
+            display: flex;
             flex-direction: column; /* Organizar elementos verticalmente */
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #f7f7f7;
+            /* background-color: #f7f7f7; Eliminado ya que se usa gradiente */
             margin: 0;
             font-family: sans-serif;
             /* Prevenir zoom en móviles */
@@ -24,11 +24,11 @@
 
         canvas {
             border: 2px solid #333;
-            background: linear-gradient(to top, LightGray, LightSkyBlue);
+            background: linear-gradient(to top, LightGray, LightSkyBlue); /* Gradiente de fondo del canvas */
             display: block;
-            margin: 10px auto; /* Centrar el canvas y añadir margen */
-            max-width: 95%; /* Limitar el ancho máximo relativo al viewport */
-            max-height: 80vh; /* Aumentar la altura máxima relativa a la altura del viewport */
+            margin: 10px auto; /* Centrar el canvas y añadir margen (ajustado de -0px) */
+            max-width: 90%; /* Limitar el ancho máximo relativo al viewport (ajustado a 90%) */
+            max-height: 85vh; /* Aumentar la altura máxima relativa a la altura del viewport (ajustado a 85vh) */
             width: auto; /* Permitir que el ancho se ajuste */
             height: auto; /* Permitir que la altura se ajuste */
         }
@@ -69,15 +69,15 @@
 
         #jumpButton {
             display: none; /* Oculto por defecto, se mostrará en pantallas más pequeñas */
-            margin-top: 80px; /* Espacio entre el canvas y el botón */
+            margin-top: 110px; /* Espacio entre el canvas y el botón (ajustado a 110px) */
             padding: 15px 30px;
             font-size: 24px;
             cursor: pointer;
             border: none;
-            border-radius: 15px;
-            background-color: #18943b;
+            border-radius: 15px; /* Ajustado a 15px */
+            background-color: #18943b; /* Ajustado al color verde */
             color: white;
-            box-shadow: 0px 10px 5px rgba(0, 0, 0, 0.3);
+            box-shadow: 0px 10px 5px rgba(0, 0, 0, 0.3); /* Ajustado el box-shadow */
         }
 
         /* Media query para mostrar el botón de salto en pantallas más pequeñas */
@@ -94,8 +94,11 @@
     <div id="score">Puntuación: 0</div>
     <div id="gameOver">Fin del Juego</div>
     <button id="restartButton">Reiniciar</button>
-<button id="jumpButton">Saltar<br>
-    </button> <script>
+    <button id="jumpButton">Saltar</button> <audio id="jumpSound" src="http://www.marcelomagni.com.ar/sound/salto.mp3"></audio>
+    <audio id="backgroundMusic" src="http://www.marcelomagni.com.ar/sound/LolaGameMusic.mp3" loop></audio>
+    <audio id="gameOverSound" src="http://www.marcelomagni.com.ar/sound/game-over.mp3"></audio>
+
+    <script>
         const canvas = document.getElementById('gameCanvas');
         const ctx = canvas.getContext('2d');
         const scoreDisplay = document.getElementById('score');
@@ -103,23 +106,28 @@
         const restartButton = document.getElementById('restartButton');
         const jumpButton = document.getElementById('jumpButton'); // Obtener el botón de salto
 
+        // Obtener elementos de audio
+        const jumpSound = document.getElementById('jumpSound');
+        const backgroundMusic = document.getElementById('backgroundMusic');
+        const gameOverSound = document.getElementById('gameOverSound');
+
         // --- Dimensiones Originales del Juego (para referencia de escalado) ---
         // Aumentar la altura original para hacer el canvas más alto
         const originalCanvasWidth = 600;
-        const originalCanvasHeight = 600; // Canvas hecho más alto
+        const originalCanvasHeight = 300; // Canvas hecho más alto (ajustado a 300)
         const aspectRatio = originalCanvasWidth / originalCanvasHeight;
 
         // --- Variables del Juego (serán escaladas) ---
         let tRex = {
             x: 0, // Se establecerá al redimensionar
             y: 0, // Se establecerá al redimensionar
-            originalWidth: 70, // Ancho base para escalado (ligeramente más grande que el cactus)
-            originalHeight: 70, // Altura base para escalado (ligeramente más grande que el cactus)
+            originalWidth: 70, // Ancho base para escalado (ajustado a 70)
+            originalHeight: 70, // Altura base para escalado (ajustado a 70)
             width: 0, // Se establecerá al redimensionar
             height: 0, // Se establecerá al redimensionar
             dy: 0,
-            gravity: 10, // Se establecerá al redimensionar
-            jumpPower: 50, // Se establecerá al redimensionar
+            gravity: 0, // Se establecerá al redimensionar
+            jumpPower: 0, // Se establecerá al redimensionar
             isJumping: false,
             rotation: 0, // Ángulo de rotación actual en radianes
             rotationSpeed: -Math.PI / 20 // Velocidad de rotación (aprox 90 grados / duración del salto)
@@ -128,7 +136,7 @@
         let obstacles = [];
         let clouds = []; // Array para almacenar objetos de nubes
         let gameSpeed = 0; // Se establecerá al redimensionar
-        const initialGameSpeed = 5; // Velocidad inicial más lenta
+        const initialGameSpeed = 5; // Velocidad inicial (ajustado a 5)
         const speedIncreasePerScore = 0.5; // Cuánto aumenta la velocidad cada 10 puntos
         let score = 0;
         let gameRunning = true;
@@ -166,8 +174,8 @@
 
         // --- Función de Escalado ---
         function scaleGame() {
-            let newWidth = window.innerWidth * 0.95; // Usar hasta el 95% del ancho de la ventana
-            let newHeight = window.innerHeight * 0.95; // Usar hasta el 95% de la altura de la ventana
+            let newWidth = window.innerWidth * 0.90; // Usar hasta el 90% del ancho de la ventana (ajustado a 90%)
+            let newHeight = window.innerHeight * 0.85; // Usar hasta el 85% de la altura de la ventana (ajustado a 85%)
 
             // Mantener la relación de aspecto
             if (newWidth / newHeight > aspectRatio) {
@@ -196,9 +204,9 @@
             tRex.x = 50 * scaleFactor;
             tRex.y = canvas.height - tRex.height; // Mantener en el suelo
 
-            // Gravedad reducida para más tiempo en el aire
-            tRex.gravity = 0.9 * scaleFactor; // Gravedad reducida
-            tRex.jumpPower = -20 * scaleFactor; // Poder de salto ajustado ligeramente
+            // Gravedad y poder de salto ajustados y escalados
+            tRex.gravity = 0.9 * scaleFactor; // Ajustado a 0.9 (escalado)
+            tRex.jumpPower = -20 * scaleFactor; // Ajustado a -20 (escalado)
 
             // gameSpeed se actualiza basado en la puntuación, así que no escalar la base aquí
 
@@ -318,8 +326,8 @@
 
             // Generar nuevos obstáculos
             // Mayor aleatoriedad en la distancia
-            const minObstacleDistance = 800 * (canvas.width / originalCanvasWidth); // Aumentar distancia mínima base
-            const randomObstacleDistance = Math.random() * 10 * (canvas.width / originalCanvasWidth); // Aumentar rango aleatorio base
+            const minObstacleDistance = 300 * (canvas.width / originalCanvasWidth); // Ajustado a 300 (escalado)
+            const randomObstacleDistance = Math.random() * 400 * (canvas.width / originalCanvasWidth); // Ajustado a 400 (escalado)
 
             if (obstacles.length === 0 || obstacles[obstacles.length - 1].x < canvas.width - randomObstacleDistance - minObstacleDistance) {
                  // Elegir una imagen de obstáculo aleatoriamente
@@ -353,6 +361,7 @@
             clouds.forEach(cloud => {
                 cloud.x -= cloud.speed * (canvas.width / originalCanvasWidth); // Escalar velocidad de la nube
             });
+
 
             // Eliminar nubes fuera de pantalla
             clouds = clouds.filter(cloud => cloud.x + cloud.width > 0);
@@ -413,6 +422,8 @@
             gameRunning = false;
             gameOverDisplay.style.display = 'block';
             restartButton.style.display = 'block';
+            backgroundMusic.pause(); // Pausar música de fondo
+            gameOverSound.play(); // Reproducir sonido de fin de juego
         }
 
         function restartGame() {
@@ -430,6 +441,12 @@
             scoreDisplay.textContent = `Puntuación: ${score}`;
             gameOverDisplay.style.display = 'none';
             restartButton.style.display = 'none';
+
+            // Detener sonido de fin de juego y reiniciar música de fondo
+            gameOverSound.pause();
+            gameOverSound.currentTime = 0; // Reiniciar tiempo del sonido de fin de juego
+            backgroundMusic.currentTime = 0; // Reiniciar tiempo de la música de fondo
+            backgroundMusic.play();
 
             // Volver a escalar elementos del juego al reiniciar en caso de redimensionamiento durante el fin del juego
             scaleGame();
@@ -466,7 +483,9 @@
              if (!tRex.isJumping && gameRunning) {
                 tRex.dy = tRex.jumpPower;
                 tRex.isJumping = true;
-                 tRex.rotation = 0; // Iniciar rotación desde 0 al saltar
+                tRex.rotation = 0; // Iniciar rotación desde 0 al saltar
+                jumpSound.currentTime = 0; // Reiniciar el sonido de salto si se reproduce rápidamente
+                jumpSound.play(); // Reproducir sonido de salto
             }
         }
 
@@ -503,7 +522,15 @@
         scaleGame();
         // Establecer velocidad inicial del juego después de escalar
         gameSpeed = initialGameSpeed * (canvas.width / originalCanvasWidth);
-        gameLoop();
+
+        // Reproducir música de fondo al iniciar el juego
+        backgroundMusic.play().catch(e => {
+            // Manejar posible error si el navegador requiere interacción del usuario para reproducir audio
+            console.log("La reproducción automática de audio fue bloqueada. Toca la pantalla para iniciar la música.");
+            // Podrías mostrar un mensaje al usuario aquí
+        });
+
+        gameLoop(); // Iniciar el bucle del juego de nuevo
 
     </script>
 </body>
