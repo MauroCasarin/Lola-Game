@@ -37,7 +37,9 @@
         #score {
             position: absolute;
             top: 20px;
-            right: 20px;
+            /* Centrar horizontalmente */
+            left: 50%;
+            transform: translateX(-50%);
             font-size: 20px;
             font-weight: bold;
             z-index: 10; /* Asegurar que la puntuación esté por encima del canvas */
@@ -115,8 +117,9 @@
         const gameOverSound = document.getElementById('gameOverSound');
 
         // --- Dimensiones Originales del Juego (para referencia de escalado) ---
+        // Aumentar la altura original para hacer el canvas más alto
         const originalCanvasWidth = 600;
-        const originalCanvasHeight = 350; // Canvas hecho más alto
+        const originalCanvasHeight = 400; // Canvas hecho más alto (ajustado a 400)
         const aspectRatio = originalCanvasWidth / originalCanvasHeight;
 
         // --- Variables del Juego (serán escaladas) ---
@@ -147,7 +150,7 @@
         // URLs de las imágenes
         const tRexImageUrl = 'https://raw.githubusercontent.com/MauroCasarin/Lola-Game/refs/heads/main/lola.svg';
         const obstacleImageUrls = [
-            'https://raw.githubusercontent.com/MauroCasarin/Lola-Game/e17ef4a544f71b08c4cf0418af133e7834ac7157/brahma.svg',
+            'https://raw.githubusercontent.com/MauroCasarin/Lola-Game/refs/heads/main/brahma.svg',
             'https://raw.githubusercontent.com/MauroCasarin/Lola-Game/refs/heads/main/quilmes.svg',
             'https://raw.githubusercontent.com/MauroCasarin/Lola-Game/refs/heads/main/stela.svg',
             'https://raw.githubusercontent.com/MauroCasarin/Lola-Game/refs/heads/main/Bud.svg'
@@ -182,6 +185,59 @@
             img.src = url;
             return img;
         });
+
+        // Contador de imágenes cargadas
+        let imagesLoaded = 0;
+        // Número total de imágenes a cargar (1 T-Rex + 4 Obstáculos + 2 Nubes + 1 Fondo)
+        const totalImages = 1 + obstacleImageUrls.length + cloudImageUrls.length + 1;
+
+        // Función para verificar si todas las imágenes se han cargado
+        function checkAllImagesLoaded() {
+            imagesLoaded++;
+            if (imagesLoaded === totalImages) {
+                // Todas las imágenes cargadas, iniciar el juego
+                scaleGame();
+                // Establecer velocidad inicial del juego después de escalar
+                gameSpeed = initialGameSpeed * (canvas.width / originalCanvasWidth);
+                 // Reproducir música de fondo al iniciar el juego
+                backgroundMusic.play().catch(e => {
+                    // Manejar posible error si el navegador requiere interacción del usuario para reproducir audio
+                    console.log("La reproducción automática de audio fue bloqueada. Toca la pantalla para iniciar la música.");
+                    // Podrías mostrar un mensaje al usuario aquí
+                });
+                gameLoop(); // Iniciar el bucle del juego
+            }
+        }
+
+        // Asignar el evento onload a cada imagen
+        tRexImage.onload = checkAllImagesLoaded;
+        backgroundImage.onload = checkAllImagesLoaded;
+
+        obstacleImages.forEach(img => {
+            img.onload = checkAllImagesLoaded;
+            img.onerror = () => { // Manejar errores de carga de obstáculos
+                console.error("Error cargando imagen de obstáculo:", img.src);
+                checkAllImagesLoaded(); // Contar como cargada (pero estará rota)
+            };
+        });
+
+        cloudImages.forEach(img => {
+            img.onload = checkAllImagesLoaded;
+             img.onerror = () => { // Manejar errores de carga de nubes
+                console.error("Error cargando imagen de nube:", img.src);
+                checkAllImagesLoaded(); // Contar como cargada (pero estará rota)
+            };
+        });
+
+        // Manejar error de carga de T-Rex y fondo
+        tRexImage.onerror = () => {
+             console.error("Error cargando imagen de T-Rex:", tRexImage.src);
+             checkAllImagesLoaded();
+        };
+         backgroundImage.onerror = () => {
+             console.error("Error cargando imagen de fondo:", backgroundImage.src);
+             checkAllImagesLoaded();
+        };
 
 
         // --- Función de Escalado ---
@@ -261,42 +317,72 @@
 
         // Función para dibujar el fondo móvil
         function drawBackground() {
-             // Dibujar la imagen de fondo dos veces para crear un efecto de bucle
-             // Dibuja la primera imagen
-            ctx.drawImage(backgroundImage, backgroundX, 0, canvas.width, canvas.height);
-            // Dibuja la segunda imagen inmediatamente después
-            ctx.drawImage(backgroundImage, backgroundX + canvas.width, 0, canvas.width, canvas.height);
+             // Asegurarse de que la imagen de fondo esté cargada antes de dibujar
+             if (backgroundImage.complete && backgroundImage.naturalHeight !== 0) {
+                 // Dibujar la imagen de fondo dos veces para crear un efecto de bucle
+                 // Dibuja la primera imagen
+                ctx.drawImage(backgroundImage, backgroundX, 0, canvas.width, canvas.height);
+                // Dibuja la segunda imagen inmediatamente después
+                ctx.drawImage(backgroundImage, backgroundX + canvas.width, 0, canvas.width, canvas.height);
+             } else {
+                 // Dibujar un color de fondo sólido si la imagen no está cargada
+                 ctx.fillStyle = '#fff'; // Color de respaldo
+                 ctx.fillRect(0, 0, canvas.width, canvas.height);
+             }
         }
 
 
         function drawTRex() {
-            ctx.save(); // Guardar el estado actual del canvas
+            // Asegurarse de que la imagen de T-Rex esté cargada antes de dibujar
+             if (tRexImage.complete && tRexImage.naturalHeight !== 0) {
+                ctx.save(); // Guardar el estado actual del canvas
 
-            // Traducir el contexto al centro del T-Rex para la rotación
-            const tRexCenterX = tRex.x + tRex.width / 2;
-            const tRexCenterY = tRex.y + tRex.height / 2;
-            ctx.translate(tRexCenterX, tRexCenterY);
+                // Traducir el contexto al centro del T-Rex para la rotación
+                const tRexCenterX = tRex.x + tRex.width / 2;
+                const tRexCenterY = tRex.y + tRex.height / 2;
+                ctx.translate(tRexCenterX, tRexCenterY);
 
-            // Rotar el contexto
-            ctx.rotate(tRex.rotation);
+                // Rotar el contexto
+                ctx.rotate(tRex.rotation);
 
-            // Dibujar la imagen del T-Rex centrada alrededor del origen
-            ctx.drawImage(tRexImage, -tRex.width / 2, -tRex.height / 2, tRex.width, tRex.height);
+                // Dibujar la imagen del T-Rex centrada alrededor del origen
+                ctx.drawImage(tRexImage, -tRex.width / 2, -tRex.height / 2, tRex.width, tRex.height);
 
-            ctx.restore(); // Restaurar el estado del canvas
+                ctx.restore(); // Restaurar el estado del canvas
+             } else {
+                 // Dibujar un rectángulo de respaldo si la imagen no está cargada
+                 ctx.fillStyle = '#555';
+                 ctx.fillRect(tRex.x, tRex.y, tRex.width, tRex.height);
+             }
         }
 
         function drawObstacles() {
             obstacles.forEach(obstacle => {
-                 // Dibujar la imagen del obstáculo
-                ctx.drawImage(obstacle.image, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                 // Asegurarse de que la imagen del obstáculo esté cargada antes de dibujar
+                 if (obstacle.image.complete && obstacle.image.naturalHeight !== 0) {
+                    // Dibujar la imagen del obstáculo
+                    ctx.drawImage(obstacle.image, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                 } else {
+                     // Dibujar un rectángulo de respaldo si la imagen no está cargada
+                     ctx.fillStyle = '#333';
+                     ctx.fillRect(obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+                 }
             });
         }
 
          function drawClouds() {
             clouds.forEach(cloud => {
-                 // Dibujar la imagen de la nube
-                ctx.drawImage(cloud.image, cloud.x, cloud.y, cloud.width, cloud.height);
+                 // Asegurarse de que la imagen de la nube esté cargada antes de dibujar
+                 if (cloud.image.complete && cloud.image.naturalHeight !== 0) {
+                    // Dibujar la imagen de la nube
+                    ctx.drawImage(cloud.image, cloud.x, cloud.y, cloud.width, cloud.height);
+                 } else {
+                     // Opcional: Podrías dibujar un círculo o algo simple como respaldo para las nubes
+                     // ctx.fillStyle = '#eee';
+                     // ctx.beginPath();
+                     // ctx.arc(cloud.x + cloud.width / 2, cloud.y + cloud.height / 2, cloud.width / 2, 0, Math.PI * 2);
+                     // ctx.fill();
+                 }
             });
         }
 
@@ -348,8 +434,9 @@
 
             // Generar nuevos obstáculos
             // Mayor aleatoriedad en la distancia
-            const minObstacleDistance = 250 * (canvas.width / originalCanvasWidth); // Ajustado a 250 (escalado)
-            const randomObstacleDistance = Math.random() * 700 * (canvas.width / originalCanvasWidth); // Ajustado a 700 (escalado)
+            // Aumentar la distancia mínima y el rango aleatorio
+            const minObstacleDistance = 300 * (canvas.width / originalCanvasWidth); // Ajustado a 300 (escalado)
+            const randomObstacleDistance = Math.random() * 1000 * (canvas.width / originalCanvasWidth); // Ajustado a 1000 (escalado)
 
             if (obstacles.length === 0 || obstacles[obstacles.length - 1].x < canvas.width - randomObstacleDistance - minObstacleDistance) {
                  // Elegir una imagen de obstáculo aleatoriamente
@@ -363,7 +450,7 @@
                 const obstacleHeight = originalObstacleHeight * (canvas.width / originalCanvasWidth);
 
                 const obstacleX = canvas.width;
-                const obstacleY = canvas.height - obstacleHeight;
+                const obstacleY = canvas.height - obstacleHeight; // Posición en el suelo
 
                 obstacles.push({
                     x: obstacleX,
@@ -554,19 +641,7 @@
         restartButton.addEventListener('click', restartGame);
 
         // --- Iniciar el juego ---
-        // Escalado inicial e iniciar el juego
-        scaleGame();
-        // Establecer velocidad inicial del juego después de escalar
-        gameSpeed = initialGameSpeed * (canvas.width / originalCanvasWidth);
-
-        // Reproducir música de fondo al iniciar el juego
-        backgroundMusic.play().catch(e => {
-            // Manejar posible error si el navegador requiere interacción del usuario para reproducir audio
-            console.log("La reproducción automática de audio fue bloqueada. Toca la pantalla para iniciar la música.");
-            // Podrías mostrar un mensaje al usuario aquí
-        });
-
-        gameLoop(); // Iniciar el bucle del juego de nuevo
+        // No iniciar el juego aquí, esperar a que todas las imágenes carguen
 
     </script>
 </body>
